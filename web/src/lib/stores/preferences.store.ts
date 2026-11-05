@@ -1,5 +1,6 @@
 import { defaultLang } from '#lib/constants.ts';
 import { convertBCP47, getPreferredLocale } from '#lib/utils/i18n.ts';
+import type { AssetOrder } from '@immich/sdk';
 import { persisted } from 'svelte-persisted-store';
 import { browser } from '$app/env';
 
@@ -138,3 +139,5 @@ export const alwaysLoadOriginalVideo = persisted<boolean>('always-load-original-
 export const recentAlbumsDropdown = persisted<boolean>('recent-albums-open', true, {});
 
 export const hideBackupsReminder = persisted<boolean>('hide-backups-reminder', false, {});
+
+export const albumFileNameSortOrders = persisted<Record<string, AssetOrder>>('album-file-name-sort-orders', {});

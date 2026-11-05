@@ -8697,7 +8697,8 @@ export enum SearchOrderField {
     FileCreatedAt = "fileCreatedAt",
     LocalDateTime = "localDateTime",
     FileSizeInBytes = "fileSizeInBytes",
-    Rating = "rating"
+    Rating = "rating",
+    OriginalFileName = "originalFileName"
 }
 export enum SearchSuggestionType {
     Country = "country",

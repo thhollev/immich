@@ -1171,6 +1171,8 @@
   "feature_photo_updated": "Feature photo updated",
   "features": "Features",
   "features_setting_description": "Manage the app features",
+  "file_name_ascending": "File name (A–Z)",
+  "file_name_descending": "File name (Z–A)",
   "file_name_or_extension": "File name or extension",
   "file_name_text": "File name",
   "file_size": "File size",

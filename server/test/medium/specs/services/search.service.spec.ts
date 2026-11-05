@@ -467,6 +467,30 @@ describe(SearchService.name, () => {
       expect(response.assets.items.map(({ id }) => id)).toEqual([assetIds[1], assetIds[0], assetIds[2]]);
     });
 
+    it('should order by originalFileName', async () => {
+      const { sut, ctx } = setup();
+      const { user } = await ctx.newUser();
+      const fileNames = ['b.jpg', 'c.jpg', 'a.jpg'];
+      const assetIds: string[] = [];
+      for (const originalFileName of fileNames) {
+        const { asset } = await ctx.newAsset({ ownerId: user.id, originalFileName });
+        assetIds.push(asset.id);
+      }
+
+      const auth = factory.auth({ user: { id: user.id } });
+      const ascending = await sut.searchMetadata(auth, {
+        size: 250,
+        orderBy: { field: SearchOrderField.OriginalFileName, direction: AssetOrder.Asc },
+      });
+      const descending = await sut.searchMetadata(auth, {
+        size: 250,
+        orderBy: { field: SearchOrderField.OriginalFileName, direction: AssetOrder.Desc },
+      });
+
+      expect(ascending.assets.items.map(({ id }) => id)).toEqual([assetIds[2], assetIds[0], assetIds[1]]);
+      expect(descending.assets.items.map(({ id }) => id)).toEqual([assetIds[1], assetIds[0], assetIds[2]]);
+    });
+
     it('should order smart search results by embedding distance with cursor offsets', async () => {
       const { ctx } = setup();
       const { user } = await ctx.newUser();
