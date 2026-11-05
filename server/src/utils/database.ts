@@ -856,6 +856,7 @@ const searchOrderColumns = {
   [SearchOrderField.LocalDateTime]: { column: 'asset.localDateTime', nullable: false },
   [SearchOrderField.FileSizeInBytes]: { column: 'asset_exif.fileSizeInByte', nullable: true },
   [SearchOrderField.Rating]: { column: 'asset_exif.rating', nullable: true },
+  [SearchOrderField.OriginalFileName]: { column: 'asset.originalFileName', nullable: false },
 } as const;
 
 export function withSearchOrder(qb: ReturnType<typeof searchAssetBuilder>, order?: SearchOrder) {

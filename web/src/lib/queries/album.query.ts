@@ -5,7 +5,9 @@ import { Route } from '#lib/route.ts';
 import { getFormatter } from '#lib/utils/i18n.ts';
 import {
   AlbumUserRole,
+  AssetVisibility,
   BulkIdErrorReason,
+  SearchOrderField,
   addAssetsToAlbum,
   addAssetsToAlbums,
   addUsersToAlbum,
@@ -17,10 +19,13 @@ import {
   getAllAlbums,
   removeAssetFromAlbum,
   removeUserFromAlbum,
+  searchAssets,
   updateAlbumInfo,
   updateAlbumUser,
   type AlbumResponseDto,
   type AlbumsAddAssetsResponseDto,
+  type AssetOrder,
+  type AssetResponseDto,
   type BulkIdResponseDto,
 } from '@immich/sdk';
 import { toastManager } from '@immich/ui';
@@ -85,6 +90,42 @@ export const getAlbumInfoQuery = (id: string) =>
     queryKey: ['album', id],
     queryFn: ({ signal }) => getAlbumInfo({ ...authManager.params, id }, { signal }),
   });
+
+const ALBUM_ASSETS_PAGE_SIZE = 1000;
+
+const getAllAlbumAssetsByFileName = async (albumId: string, direction: AssetOrder, signal: AbortSignal) => {
+  const assets: AssetResponseDto[] = [];
+  let cursor: string | undefined;
+  do {
+    const { assets: page } = await searchAssets(
+      {
+        metadataSearchDto: {
+          filter: {
+            albumIds: { any: [albumId] },
+            visibility: { in: [AssetVisibility.Timeline, AssetVisibility.Archive] },
+            trashedAt: { eq: null },
+          },
+          orderBy: { field: SearchOrderField.OriginalFileName, direction },
+          size: ALBUM_ASSETS_PAGE_SIZE,
+          cursor,
+        },
+      },
+      { signal },
+    );
+    assets.push(...page.items);
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor);
+  return assets;
+};
+
+export const getAlbumAssetsByFileNameQuery = (albumId: string, direction: AssetOrder) =>
+  queryOptions({
+    queryKey: ['album', albumId, 'assets-by-file-name', direction],
+    queryFn: ({ signal }) => getAllAlbumAssetsByFileName(albumId, direction, signal),
+  });
+
+export const invalidateAlbumAssetsByFileName = (albumId: string) =>
+  queryClient.invalidateQueries({ queryKey: ['album', albumId, 'assets-by-file-name'] });
 
 export const getAlbumMapMarkersQuery = (id: string) =>
   queryOptions({

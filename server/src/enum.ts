@@ -1337,6 +1337,7 @@ export enum SearchOrderField {
   LocalDateTime = 'localDateTime',
   FileSizeInBytes = 'fileSizeInBytes',
   Rating = 'rating',
+  OriginalFileName = 'originalFileName',
 }
 
 export const SearchOrderFieldSchema = z.enum(SearchOrderField).meta({ id: 'SearchOrderField' });

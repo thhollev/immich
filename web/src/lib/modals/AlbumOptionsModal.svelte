@@ -10,6 +10,7 @@
     handleRemoveUserFromAlbum,
     handleUpdateUserAlbumRole,
   } from '#lib/services/album.service.ts';
+  import { albumFileNameSortOrders } from '#lib/stores/preferences.store.ts';
   import {
     AlbumUserRole,
     AssetOrder,
@@ -49,6 +50,37 @@
   const updateAlbum = (updateAlbumDto: UpdateAlbumDto) =>
     executeMutation(updateAlbumInfoMutation, [{ id: album.id, updateAlbumDto }]);
 
+  type DisplayOrder = AssetOrder | `file-name-${AssetOrder}`;
+
+  const fileNameSortOrder = $derived<AssetOrder | undefined>($albumFileNameSortOrders[album.id]);
+  const displayOrder = $derived<DisplayOrder>(
+    fileNameSortOrder ? `file-name-${fileNameSortOrder}` : (album.order ?? AssetOrder.Desc),
+  );
+
+  const setFileNameSortOrder = (order?: AssetOrder) => {
+    const { [album.id]: _, ...others } = $albumFileNameSortOrders;
+    $albumFileNameSortOrders = order ? { ...others, [album.id]: order } : others;
+  };
+
+  const handleDisplayOrderChange = async (value: DisplayOrder) => {
+    switch (value) {
+      case 'file-name-asc': {
+        setFileNameSortOrder(AssetOrder.Asc);
+        return;
+      }
+      case 'file-name-desc': {
+        setFileNameSortOrder(AssetOrder.Desc);
+        return;
+      }
+      default: {
+        setFileNameSortOrder();
+        if (value !== album.order) {
+          await updateAlbum({ order: value });
+        }
+      }
+    }
+  };
+
   const sharedLinksQuery = createQuery(
     () => getAllSharedLinksQuery({ albumId: album.id }),
     () => queryClient,
@@ -65,12 +97,14 @@
           {#if album.order}
             <Field label={$t('display_order')} disabled={readOnly}>
               <Select
-                value={album.order}
+                value={displayOrder}
                 options={[
                   { label: $t('newest_first'), value: AssetOrder.Desc },
                   { label: $t('oldest_first'), value: AssetOrder.Asc },
-                ]}
-                onChange={(value) => updateAlbum({ order: value })}
+                  { label: $t('file_name_ascending'), value: 'file-name-asc' },
+                  { label: $t('file_name_descending'), value: 'file-name-desc' },
+                ] as SelectOption<DisplayOrder>[]}
+                onChange={handleDisplayOrderChange}
               />
             </Field>
           {/if}

@@ -1,11 +1,14 @@
 import { Route } from '#lib/route.ts';
+import { albumFileNameSortOrders } from '#lib/stores/preferences.store.ts';
 import { factory } from '#test/unit/factories.ts';
 import { test } from '#test/unit/fixtures.ts';
-import { AlbumUserRole } from '@immich/sdk';
-import { expect } from 'vitest';
+import { AlbumUserRole, AssetOrder, SearchOrderField } from '@immich/sdk';
+import { afterEach, expect } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import Page from './+page.svelte';
 import { load } from './+page.ts';
+
+afterEach(() => albumFileNameSortOrders.set({}));
 
 test('shows the album date range', async ({ data, router, render }) => {
   const assets = [
@@ -97,4 +100,24 @@ test('deleting a comment keeps the other comments', async ({ data, router, rende
   await expect.element(page.getByText('first', { exact: true })).toBeVisible();
   await expect.element(page.getByText('third', { exact: true })).toBeVisible();
   expect(api.deleteActivity).toHaveBeenCalledWith({ params: { id: comments[1].id } });
+});
+
+test('loads the album assets sorted by file name', async ({ data, router, render, settle, api }) => {
+  const assets = [factory.asset({ originalFileName: 'b.jpg' }), factory.asset({ originalFileName: 'a.jpg' })];
+  data.addAssets(assets);
+  const album = factory.album({ albumUsers: [{ role: AlbumUserRole.Owner, user: data.user }] });
+  data.addAlbums(album).addToAlbum(album.id, assets);
+  albumFileNameSortOrders.set({ [album.id]: AssetOrder.Desc });
+  await router.goto(Route.viewAlbum(album), { albumId: album.id });
+
+  await render(Page, load);
+  await settle();
+
+  expect(api.searchAssets).toHaveBeenCalledWith({
+    body: expect.objectContaining({
+      filter: expect.objectContaining({ albumIds: { any: [album.id] } }),
+      orderBy: { field: SearchOrderField.OriginalFileName, direction: AssetOrder.Desc },
+    }),
+  });
+  expect(api.getTimeBuckets).not.toHaveBeenCalled();
 });
